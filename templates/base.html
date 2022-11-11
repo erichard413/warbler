@@ -62,6 +62,7 @@
   {% endblock %}
 
 </div>
+{% if g.user %}
 <div id="myModal" class="modal">
 
   
@@ -69,28 +70,13 @@
       <span class="close">&times;</span>
       <div class="row justify-content-center">
         <div class="col-md-6">
-          <form action="/messages/new" method="POST">
-            {{ g.msg_form.csrf_token }}
-            <div>
-              {% if g.msg_form.text.errors %}
-                {% for error in g.msg_form.text.errors %}
-                  <span class="text-danger">
-                {{ error }}
-              </span>
-                {% endfor %}
-              {% endif %}
-              {{ g.msg_form.text(placeholder="What's happening?", type="text", class="form-control", maxlength="280", id="new-message", rows="3") }}
-            <span class="lead-sm text-danger charlimit" id="charcount"></span>
-            </div>
-            <button class="btn btn-outline-success btn-block">Add my message!</button>
-            
-          </form>
-          
+            {% include "forms/msgform.html" %}          
         </div>
       </div>
     </div>
   
   </div>
+  {% endif %}
 
 <script src="/static/script/app.js"></script>
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
