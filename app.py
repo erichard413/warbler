@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, flash, redirect, session, g
 # from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
-from forms import UserAddForm, LoginForm, MessageForm, UserUpdateForm
+from forms import UserAddForm, LoginForm, MessageForm, UserUpdateForm, UpdatePasswordForm
 from models import db, connect_db, User, Message, Likes
 
 CURR_USER_KEY = "curr_user"
@@ -253,6 +253,37 @@ def delete_user():
 
     return redirect("/signup")
 
+@app.route('/users/settings')
+def settings_page():
+    """show settings form"""
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    
+    return render_template("users/settings.html")
+
+@app.route('/users/changepw', methods=["GET","POST"])
+def change_pw_form():
+    form = UpdatePasswordForm()
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    
+    if form.validate_on_submit():
+        password = form.password.data
+        new_password = form.new_password.data
+        if User.change_password(g.user.username, password, new_password):
+            db.session.commit()
+            flash('Password change successful!', "success")
+            return redirect('/users/settings')
+        else:
+            flash('Invalid credentials. Please check password & try again.', 'danger')
+            return redirect('/users/changepw')    
+    return render_template('users/changepw.html', form=form)
+    
+
+
 
 ##############################################################################
 # Messages routes:
@@ -349,6 +380,11 @@ def homepage():
 @app.errorhandler(404)
 def not_found_err():
     """displays when 404'd"""
+    flash("404 - Page not found!", "danger")
+    return redirect("/")
+@app.errorhandler(500)
+def unexpected_request():
+    """displays when 500'd"""
     flash("404 - Page not found!", "danger")
     return redirect("/")
 

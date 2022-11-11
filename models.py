@@ -168,7 +168,17 @@ class User(db.Model):
                 return user
 
         return False
-  
+    @classmethod
+    def change_password(cls, username, password, new_password):
+        """Authenticate username & password, then encrypt new password & store it into db"""
+        if cls.authenticate(username, password):
+            user = cls.query.filter_by(username=username).first()
+            new_hashed_pwd = bcrypt.generate_password_hash(new_password).decode('UTF-8')
+            user.password = new_hashed_pwd
+            db.session.add(user)
+            return user
+        else:
+            return False
 
 
 class Message(db.Model):
