@@ -8,6 +8,32 @@ from flask_sqlalchemy import SQLAlchemy
 bcrypt = Bcrypt()
 db = SQLAlchemy()
 
+class DirectMessage(db.Model):
+    """direct message - from one user to another"""
+    __tablename__ = 'dms'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    dm_from = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    dm_to = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    message_text = db.Column(db.String(280), nullable=False)
+
+    timestamp = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow(),
+    )
+    is_new = db.Column(
+        db.Boolean,
+        default=True
+    )
+
+    user_from = db.relationship('User', foreign_keys=[dm_from])
+    user_to = db.relationship('User', foreign_keys=[dm_to], backref="dms")
+
+
 class Notification(db.Model):
     """notifications for users"""
 
@@ -15,7 +41,7 @@ class Notification(db.Model):
 
     id = db.Column(
         db.Integer,
-        primary_key=True,
+        primary_key=True
     )
 
     notification_txt = db.Column(db.String(20), nullable=False)
@@ -221,7 +247,16 @@ class User(db.Model):
         """Will output a list of blocked users for self user"""
         block_list = [User.query.get(block.blocked_user) for block in self.blocks]
         return block_list
-
+    def get_direct_messages(self):
+        """This will output a list of DMs where self user is DM_TO"""
+        my_dms = DirectMessage.query.filter_by(dm_to=self.id).all()
+        return my_dms
+    def check_for_new_dm(self):
+        """This will check for new messages on g.user"""
+        for dm in self.dms:
+            if dm.is_new:
+                return True;
+        return False;
     @classmethod
     def signup(cls, username, email, password, image_url):
         """Sign up user.

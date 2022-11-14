@@ -4,8 +4,8 @@ from flask import Flask, render_template, request, flash, redirect, session, g
 # from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
-from forms import UserAddForm, LoginForm, MessageForm, UserUpdateForm, UpdatePasswordForm, PrivacySettingsForm, AdminUserUpdateForm
-from models import db, connect_db, User, Message, Likes, Notification, Block
+from forms import UserAddForm, LoginForm, MessageForm, UserUpdateForm, UpdatePasswordForm, PrivacySettingsForm, AdminUserUpdateForm, DirectMessageForm
+from models import db, connect_db, User, Message, Likes, Notification, Block, DirectMessage
 
 CURR_USER_KEY = "curr_user"
 
@@ -506,7 +506,65 @@ def show_blocked_users():
     block_list = g.user.get_blocked_users()
     return render_template("users/blockedusers.html", blocked_users = block_list)
 
+##############################################################################
+# Direct Messages routes:
 
+@app.route('/messages/direct-messages')
+def show_direct_messages():
+    """shows direct messages"""
+    if not g.user:
+        flash("Access unauthorized.","danger")
+        return redirect('/')
+    # dms = g.user.get_direct_messages()
+    return render_template('users/directmessages.html')
+
+@app.route('/messages/<int:dm_id>/markread', methods=["POST"])
+def mark_dm_read(dm_id):
+    """This will mark DM as READ, set is_new value to False on dm model"""
+    if not g.user:
+        flash("Access unauthorized.","danger")
+        return redirect('/')
+    dm = DirectMessage.query.get_or_404(dm_id)
+    dm.is_new = False
+    db.session.commit()
+    flash('Message marked as read', 'success')
+    return redirect('/messages/direct-messages')
+@app.route('/messages/<int:dm_to_id>/reply', methods=["POST","GET"])
+def reply_to_dm(dm_to_id):
+    """GET: show reply form - POST: send reply"""
+    if not g.user:
+        flash("Access unauthorized.","danger")
+        return redirect('/')
+
+    form = DirectMessageForm()
+    to_user = User.query.get_or_404(dm_to_id)
+    if form.validate_on_submit():
+        text = form.message_text.data
+        new_dm = DirectMessage(dm_to=dm_to_id, dm_from=g.user.id, message_text=text)
+        db.session.add(new_dm)
+        db.session.commit()
+        
+        flash(f"Message to {to_user.username} sent!", 'success')
+        return redirect('/messages/direct-messages')
+    else:
+        return render_template('messages/dmnew.html', form=form, reply_to=to_user)
+@app.route('/messages/<int:user_to>/send', methods=["GET","POST"])
+def send_message_to_user(user_to):
+    """GET: shows message form POST: send message to user"""
+    if not g.user:
+        flash("Access unauthorized.","danger")
+        return redirect('/')
+    to_user = User.query.get_or_404(user_to)    
+    form = DirectMessageForm()
+    if form.validate_on_submit():
+        text = form.message_text.data
+        new_dm = DirectMessage(dm_to=user_to.id, dm_from=g.user.id, message_text=text)
+        db.session.add(new_dm)
+        db.session.commit()
+        flash(f"Message to {to_user.username} sent!", 'success')
+        return redirect(f'/users/{user_to.id}')
+    else: 
+        return render_template('messages/dmnew.html', form=form, reply_to=to_user)
 @app.route('/')
 def homepage():
     """Show homepage:

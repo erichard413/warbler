@@ -1,0 +1,16 @@
+<form action="/messages/{{reply_to.id}}/reply" method="POST">
+    {{ form.csrf_token }}
+    <div>
+      {% if form.message_text.errors %}
+        {% for error in form.message_text.errors %}
+          <span class="text-danger">
+        {{ error }}
+      </span>
+        {% endfor %}
+      {% endif %}
+      {{ form.message_text(placeholder="Type a nice message here", type="text", class="form-control", maxlength="280", id="new-message", rows="3") }}
+    <span class="lead-sm text-danger charlimit" id="charcount"></span>
+    </div>
+    <button class="btn btn-outline-success btn-block">Send</button>
+    
+  </form>

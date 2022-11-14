@@ -639,3 +639,40 @@ buttons */
   display: inline-block;
   z-index:3;
 }
+
+/* DIRECT MESSAGES */
+
+.dm-card {
+  background-color: white;
+  border: solid 1px rgb(158, 157, 157);
+  border-radius: 15px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+.dm-inner {
+  padding: 5px;
+}
+.dm-card-contents {
+  padding: 10px;
+}
+.dm-to, .dm-from {
+  display: block;
+  margin: 0px;
+  padding: 0px;
+}
+.dm-text {
+  margin: 0px;
+  padding-top: 15px;
+  padding-bottom: 15px;
+}
+.dm-timestamp {
+  font-size: .5rem;
+}
+.dm-buttons form {
+  display: inline-block;
+}
+.dm-card-new {
+    background-color: white;
+    border: solid 1px rgb(15, 202, 235);
+    border-radius:15px;
+}
