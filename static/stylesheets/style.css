@@ -103,6 +103,18 @@ nav form.navbar-form {
   border: 2px solid #007bff;
 }
 
+.badge {
+  z-index:4;
+  position: absolute;
+  width: 1px;
+  height: 2px;
+  padding: 4px;
+  border-radius: 50%;
+  background: red;
+  font-size: 8px;
+}
+
+
 /* on "onboarding" pages (signup & login), the navbar is
    different: no search box, the logo is centered, and it has
    a background color.
@@ -153,6 +165,10 @@ nav + .container {
 }
 
 /* ===================== User profile */
+
+#verifiedcheck {
+  color: rgb(82, 170, 243);
+}
 
 .join-message {
   margin-top: 100px;
@@ -593,4 +609,33 @@ p.card-bio {
   padding-left: 70%;
   font-size: 11px;
   width: 100%;
+}
+/* 
+buttons */
+
+.notification-buttons form {
+  display: inline-block;
+}
+
+.btn-small {
+  width: auto;
+  height: auto;
+  font-size: 8px;
+  padding: 1px;
+  z-index: 4;
+  color: white;
+  background-color: red;
+  border-radius: 7px;
+  border: none;
+}
+
+.admin-tools {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.admin-form {
+  display: inline-block;
+  z-index:3;
 }

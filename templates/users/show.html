@@ -2,24 +2,41 @@
 {% block user_details %}
   <div class="col-sm-6">
     <ul class="list-group" id="messages">
-
+      {% if user.is_private and user not in g.user.following and user.id != g.user.id %}
+        <p>This account is private - you must follow this account to see messages.</p>
+      
+      {% elif g.user.check_for_blocked(user) %}
+      <p>This account is blocked - you will not be able to view their messages.</p>
+      {% else %}
       {% for message in messages %}
-
-        <li class="list-group-item">
+      <li class="list-group-item">
           <a href="/messages/{{ message.id }}" class="message-link"/>
 
-          <a href="/users/{{ user.id }}">
-            <img src="{{ user.image_url }}" alt="user image" class="timeline-image">
+          <a href="/users/{{ message.user.id }}">
+            <img src="{{ message.user.image_url }}" alt="user image" class="timeline-image">
           </a>
 
           <div class="message-area">
-            <a href="/users/{{ user.id }}">@{{ user.username }}</a>
+            <a href="/users/{{ message.user.id }}">@{{ message.user.username }} {% if message.user.is_verified %}<i class="fa-solid fa-square-check" id="verifiedcheck"></i>{% endif %}</a>
             <span class="text-muted">{{ message.timestamp.strftime('%d %B %Y') }}</span>
             <p>{{ message.text }}</p>
           </div>
+          
         </li>
-
-      {% endfor %}
+        {% if g.user.is_admin %}
+              <span class="admin-tools">Admin Tools:</span>
+              <div>
+                <form class="admin-form" action="/messages/{{message.id}}/delete" method="POST">
+                <button class="btn-small btn-danger">Delete</button>
+              </form>
+              <form class="admin-form" action="/users/{{message.user.id}}/delete" method="POST">
+                <button class="btn-small btn-danger">Delete User</button>
+              </form>
+              </div>
+              
+              {% endif %}
+        {% endfor %}
+      {% endif %}
 
     </ul>
   </div>

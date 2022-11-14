@@ -12,7 +12,7 @@
             <img src="{{ g.user.image_url }}"
                  alt="Image for {{ g.user.username }}"
                  class="card-image">
-            <p>@{{ g.user.username }}</p>
+            <p>@{{ g.user.username }} {% if g.user.is_verified %}<i class="fa-solid fa-square-check" id="verifiedcheck"></i>{% endif %}</p>
           </a>
           <ul class="user-stats nav nav-pills">
             <li class="stat">
@@ -47,21 +47,36 @@
               <img src="{{ msg.user.image_url }}" alt="" class="timeline-image">
             </a>
             <div class="message-area">
-              <a href="/users/{{ msg.user.id }}">@{{ msg.user.username }}</a>
+              <a href="/users/{{ msg.user.id }}">@{{ msg.user.username }} {% if msg.user.is_verified %}<i class="fa-solid fa-square-check" id="verifiedcheck"></i>{% endif %}</a>
               <span class="text-muted">{{ msg.timestamp.strftime('%d %B %Y') }}</span>
               <p>{{ msg.text }}</p>
+              
             </div>
-            
-              <button class="btn btn-sm messages-form {% if msg in g.user.likes %}btn-primary{% else %}btn-secondary{% endif %}">
+              
+                <button class="btn btn-sm messages-form {% if msg in g.user.likes %}btn-primary{% else %}btn-secondary{% endif %}">
                 <i class="fa fa-thumbs-up" id="{{msg.id}}"></i> 
               </button>
             
+              
+            
           </li>
-        {% endfor %}
+          {% if g.user.is_admin %}
+              <span class="admin-tools">Admin Tools:</span>
+              <div>
+                <form class="admin-form" action="/messages/{{msg.id}}/delete" method="POST">
+                <button class="btn-small btn-danger">Delete</button>
+              </form>
+              <form class="admin-form" action="/users/{{msg.user.id}}/delete" method="POST">
+                <button class="btn-small btn-danger">Delete User</button>
+              </form>
+              </div>
+              
+              {% endif %}
+          {% endfor %}
       </ul>
     </div>
 
   </div>
 
-
+<script src="/static/script/messages.js"></script>
 {% endblock %}

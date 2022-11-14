@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+  <div class="row justify-content-md-center">
+    <div class="col-md-4">
+      <h2 class="join-message">Notifications<i class="fa-solid fa-gears"></i></h2>
+          <ul>
+            {% for n in notifications %}
+            <li>{{ n.from_user.username }} wants to follow you!
+               <div class="notification-buttons">    
+                    <form method="POST" action="/users/accept-follow/{{n.from_id}}/{{n.id}}" class="form-inline">
+                    <button class="btn btn-inline btn-success ml-2">Accept</button>
+                    </form>
+                    <form method="POST" action="/users/reject-follow/{{n.from_id}}" class="form-inline">
+                    <button class="btn btn-inline btn-danger ml-2">Decline</button>
+                  </form>
+                </div>
+            </li>
+
+            {% endfor %}
+          </ul>
+    </div>
+  </div>
+
+{% endblock %}

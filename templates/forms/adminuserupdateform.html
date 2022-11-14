@@ -1,4 +1,4 @@
-<form method="POST" id="user_form">
+<form action="/users/{{user.id}}/edit" method="POST" id="user_form">
     {{ form.hidden_tag() }}
 
     {% for field in form if field.widget.input_type != 'hidden' and field.name != 'password' %}
@@ -6,18 +6,12 @@
         <span class="text-danger">{{ error }}</span>
       {% endfor %}
       {{ field.label.text }}
+      {% if field.id == "is_private" or field.id == "is_admin" or field.id == "is_verified" %}
+      <p>{{ field(placeholder=field.label.text) }}</p>
+      {% else %}
       {{ field(placeholder=field.label.text, class="form-control") }}
+      {% endif %}
     {% endfor %}
-
-    <p>To confirm changes, enter your password:</p>
-    {% if form.password.errors %}
-      {% for error in form.password.errors %}
-        <span class="text-danger">
-        {{ error }}
-      </span>
-      {% endfor %}
-    {% endif %}
-    {{ form.password(placeholder="Enter your password to confirm", class="form-control") }}
 
     <div class="edit-btn-area">
       <button class="btn btn-success">Edit this user!</button>

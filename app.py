@@ -4,8 +4,8 @@ from flask import Flask, render_template, request, flash, redirect, session, g
 # from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
-from forms import UserAddForm, LoginForm, MessageForm, UserUpdateForm, UpdatePasswordForm
-from models import db, connect_db, User, Message, Likes
+from forms import UserAddForm, LoginForm, MessageForm, UserUpdateForm, UpdatePasswordForm, PrivacySettingsForm, AdminUserUpdateForm
+from models import db, connect_db, User, Message, Likes, Notification, Block
 
 CURR_USER_KEY = "curr_user"
 
@@ -147,7 +147,7 @@ def users_show(user_id):
     """Show user profile."""
 
     user = User.query.get_or_404(user_id)
-
+    blocked = g.user.check_for_blocked(user)
     # snagging messages in order from the database;
     # user.messages won't be in order by default
     messages = (Message
@@ -156,7 +156,7 @@ def users_show(user_id):
                 .order_by(Message.timestamp.desc())
                 .limit(100)
                 .all())
-    return render_template('users/show.html', user=user, messages=messages)
+    return render_template('users/show.html', user=user, messages=messages, blocked=blocked)
 
 
 @app.route('/users/<int:user_id>/following')
@@ -197,8 +197,21 @@ def add_follow(follow_id):
 
     return redirect(f"/users/{g.user.id}/following")
 
+@app.route('/users/follow/request/<follow_id>', methods=["POST"])
+def add_follow_request(follow_id):
+    """sends a notification request to user"""
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
 
-@app.route('/users/stop-following/<int:follow_id>', methods=['POST'])
+    new_notification = Notification(notification_txt="follow_request", from_id=g.user.id, to_id=follow_id)
+    db.session.add(new_notification)
+    db.session.commit()
+    flash('Follow request sent!', 'success')
+    return redirect(f'/users/{follow_id}')
+
+
+@app.route('/users/stop-following/<int:follow_id>', methods=['GET','POST'])
 def stop_following(follow_id):
     """Have currently-logged-in-user stop following this user."""
 
@@ -237,8 +250,30 @@ def profile():
     
     return render_template("users/edit.html", form=form)
 
+@app.route('/users/<int:user_id>/edit', methods=["GET","POST"])
+def admin_edit_profile(user_id):
+    """GET - show edit form for user. POST - update form"""
+    if not g.user.is_admin:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    user = User.query.get_or_404(user_id)
+    form = AdminUserUpdateForm(obj=user)
+    if form.validate_on_submit():
+        user.username = form.username.data
+        user.email = form.email.data
+        user.image_url = form.image_url.data
+        user.header_image_url = form.header_image_url.data
+        user.is_private = form.is_private.data
+        user.is_admin = form.is_admin.data
+        user.is_verified = form.is_verified.data
+        db.session.commit()
+        flash('User updated successfully', 'success')
+        return redirect(f'/users/{user_id}')
+    else:
+        user = User.query.get_or_404(user_id)
+        return render_template('/users/adminedit.html', user=user, form=form)
 
-@app.route('/users/delete', methods=["POST"])
+@app.route('/users/delete', methods=["GET","POST"])
 def delete_user():
     """Delete user."""
 
@@ -253,6 +288,20 @@ def delete_user():
 
     return redirect("/signup")
 
+@app.route('/users/<int:user_id>/delete', methods=["GET","POST"])
+def delete_selected_user(user_id):
+    """ADMIN ONLY Delete user."""
+
+    if not g.user.is_admin:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    user = User.query.get_or_404(user_id)
+    db.session.delete(user)
+    db.session.commit()
+    flash('User deleted successfully!', 'success')
+    return redirect("/")
+
 @app.route('/users/settings')
 def settings_page():
     """show settings form"""
@@ -261,6 +310,27 @@ def settings_page():
         return redirect("/")
     
     return render_template("users/settings.html")
+@app.route('/users/privacy')
+def privacy_settings():
+    """show privacy settings form"""
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    form = PrivacySettingsForm(obj=g.user)
+    return render_template('users/privacy.html', form=form)
+    
+
+@app.route('/users/privacy/<int:user_id>', methods=["GET","POST"])
+def privacy_settings_edit(user_id):
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    form = PrivacySettingsForm()
+    g.user.is_private = form.is_private.data
+    db.session.commit()
+    flash('Privacy settings updated successfully!', 'success')
+    return redirect('/users/privacy')
+    
 
 @app.route('/users/changepw', methods=["GET","POST"])
 def change_pw_form():
@@ -281,6 +351,42 @@ def change_pw_form():
             flash('Invalid credentials. Please check password & try again.', 'danger')
             return redirect('/users/changepw')    
     return render_template('users/changepw.html', form=form)
+    
+@app.route('/users/<user_id>/notifications')
+def show_notification_page(user_id):
+    """Show notification page"""
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    notifications = Notification.query.filter_by(to_id=user_id)
+    return render_template('/users/notifications.html', notifications=notifications)
+
+@app.route('/users/accept-follow/<int:from_id>/<int:notification_id>', methods=["POST"])
+def accept_follow(from_id, notification_id):
+    """accepts follow, adds new follow to user following list"""
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    from_user = User.query.get_or_404(from_id)
+    n = Notification.query.get_or_404(notification_id)
+    g.user.accept_follow_req(from_user, n)
+    db.session.delete(n)
+    db.session.commit()
+    flash(f'Accepted follow request from {from_user.username}', 'success')
+    return redirect(f'/users/{g.user.id}')
+@app.route('/users/reject-follow/<int:from_id>/<int:notification_id>', methods=["POST"])
+def reject_follow(from_id, notification_id):
+    """rejects follow, clears notification"""
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    n = Notification.query.get_or_404(notification_id)
+    g.user.notifications.remove(n)
+    db.session.delete(n)
+    db.session.commit()
+    flash(f'Declined follow request from {from_user.username}', 'success')
+    return redirect(f'/users/{g.user.id}')
     
 
 
@@ -319,7 +425,7 @@ def messages_show(message_id):
     return render_template('messages/show.html', message=msg)
 
 
-@app.route('/messages/<int:message_id>/delete', methods=["POST"])
+@app.route('/messages/<int:message_id>/delete', methods=["GET","POST"])
 def messages_destroy(message_id):
     """Delete a message."""
 
@@ -330,8 +436,18 @@ def messages_destroy(message_id):
     msg = Message.query.get(message_id)
     db.session.delete(msg)
     db.session.commit()
-
+    flash('Message deleted successfully', 'success')
     return redirect(f"/users/{g.user.id}")
+@app.route('/messages/all')
+def messages_show_all():
+    """page to view all messages - even users who aren't followed"""
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    shown_msgs = Message.query.all()
+    msg = [message for message in shown_msgs if g.user.check_for_blocked(message.user) == False]
+    
+    return render_template('home.html', messages=msg)
 
 
 ##############################################################################
@@ -342,23 +458,53 @@ def like_post(msg_id):
     """Route for liking a post"""
     msg = Message.query.get(msg_id)
     if msg in g.user.likes:
-        like = Likes.query.filter_by(message_id=msg_id).first()
-        db.session.delete(like)
+        g.user.likes.remove(msg)
+        
         db.session.commit()
+        return ("",201)
     else:
-        new_like = Likes(user_id=g.user.id, message_id=msg_id)
-        db.session.add(new_like)
-        db.session.commit() 
-    return redirect("/")
+        g.user.likes.append(msg)
+        db.session.commit()
+        return ("",201)
+
 
 @app.route('/users/<int:user_id>/likes')
 def show_liked_posts(user_id):
     """Shows page with lists of liked posts"""
     user = User.query.get(user_id)
     user_likes = user.likes    
-    return render_template(f'/users/likes.html', messages=user_likes)
+    return (render_template(f'/users/likes.html', messages=user_likes))
 ##############################################################################
 # Homepage and error pages
+
+#########################BLOCK USERS##########################################
+@app.route('/users/block/<int:user_id>', methods=["GET","POST"])
+def block_this_user(user_id):
+    """Blocks user"""
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    user = User.query.get_or_404(user_id)
+    if g.user.check_for_blocked(user):
+        block = Block.query.filter_by(user=g.user.id, blocked_user=user.id).first()
+        db.session.delete(block)
+        db.session.commit()
+        flash('User unblocked!', 'danger')
+        return redirect(f'/users/{user_id}')    
+    else:
+        new_block = Block(user=g.user.id, blocked_user=user.id)
+        db.session.add(new_block)
+        db.session.commit()
+        flash('User blocked!', 'danger')
+        return redirect(f'/users/{user_id}')
+
+@app.route('/users/blocked')
+def show_blocked_users():
+    if not g.user:
+        flash("Access unauthorized.", 'danger')
+        return redirect('/')
+    block_list = g.user.get_blocked_users()
+    return render_template("users/blockedusers.html", blocked_users = block_list)
 
 
 @app.route('/')
@@ -371,10 +517,10 @@ def homepage():
     ## NOTE - I do not think this is the correct way to handle this request. But it is functionable!
     if g.user:
         all_messages = (Message.query.order_by(Message.timestamp.desc()).all())
-        messages = [msg for msg in all_messages if g.user in msg.user.followers or msg.user == g.user]
+        messages = [msg for msg in all_messages if g.user in msg.user.followers or msg.user == g.user and not g.user.check_for_blocked(msg.user)]
         messages = messages[:100]
+    #    messages = g.user.get_messages()
         return render_template('home.html', messages=messages)
-
     else:
         return render_template('home-anon.html')
 @app.errorhandler(404)

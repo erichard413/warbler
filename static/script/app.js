@@ -1,24 +1,4 @@
 
-const btns = document.querySelectorAll('.btn')
-
-btns.forEach(function (e) {
-    e.addEventListener('click', async function(e){
-        messageId = (e.target.id).toString()
-        await axios.post(`/users/add_like/${messageId}`)
-        
-        let btn = (e.target.closest("button"))
-        if (btn.classList.contains('btn-primary')) {
-            btn.classList.remove('btn-primary')
-            btn.classList.add('btn-secondary')
-        }
-        else {
-            btn.classList.remove('btn-secondary')
-            btn.classList.add('btn-primary')
-        }
-        
-    })
-})
-
 const modal = document.getElementById("myModal")
 const modalNewMsgBtn = document.getElementById("newMsgLink")
 const span = document.getElementsByClassName("close")[0];
@@ -53,13 +33,3 @@ messageInput.addEventListener('keyup', function(e) {
     }
    
 })
-
-// function char_limit(messageInput) {
-//     let max_chars = 279;
-//     if (messageInput.value.length > max_chars) {
-//         messageInput.value = messageInput.value.slice(0, max_chars)
-//     }
-// }
-// messageInput.addEventListener('keydown', function(e) {
-//     char_limit(messageInput)
-// })
