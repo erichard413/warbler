@@ -24,7 +24,7 @@ email='erik@erikrichard.com'
 image_url='https://pbs.twimg.com/profile_images/1181201389701259265/Ggo4P7Ht_400x400.jpg'
 
 
-admin_user = User.signup(username, email, password)
+admin_user = User.signup(username, email, password, image_url)
 admin_user.is_admin=True
 db.session.add(admin_user)
 db.session.commit()
