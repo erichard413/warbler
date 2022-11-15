@@ -6,13 +6,13 @@ from models import User, Message, Follows
 
 
 
-# import collections
+import collections
 # from collections.abc import MutableMapping
-# # try:
-# #     from collections import abc
-# #     collections.MutableMapping = abc.MutableMapping
-# # except:
-# #     pass
+try:
+    from collections import abc
+    collections.MutableMapping = abc.MutableMapping
+except:
+    pass
 
 
 db.drop_all()
@@ -28,13 +28,13 @@ admin_user.is_admin=True
 db.session.add(admin_user)
 db.session.commit()
 
-# with open('generator/users.csv') as users:
-#     db.session.bulk_insert_mappings(User, DictReader(users))
+with open('generator/users.csv') as users:
+    db.session.bulk_insert_mappings(User, DictReader(users))
 
-# with open('generator/messages.csv') as messages:
-#     db.session.bulk_insert_mappings(Message, DictReader(messages))
+with open('generator/messages.csv') as messages:
+    db.session.bulk_insert_mappings(Message, DictReader(messages))
 
-# with open('generator/follows.csv') as follows:
-#     db.session.bulk_insert_mappings(Follows, DictReader(follows))
+with open('generator/follows.csv') as follows:
+    db.session.bulk_insert_mappings(Follows, DictReader(follows))
 
-# db.session.commit()
+db.session.commit()
