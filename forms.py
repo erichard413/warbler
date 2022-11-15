@@ -8,6 +8,9 @@ class MessageForm(FlaskForm):
 
     text = TextAreaField('text', validators=[DataRequired(),Length(max=280)])
 
+class DirectMessageForm(FlaskForm):
+    """Form for direct messages."""
+    message_text = TextAreaField('Text', validators=[DataRequired(),Length(max=280)])
 
 class UserAddForm(FlaskForm):
     """Form for adding users."""
