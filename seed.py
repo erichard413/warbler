@@ -3,13 +3,15 @@
 from csv import DictReader
 from app import db
 from models import User, Message, Follows
+from collections.abc import MutableMapping
+# import collections
+# try:
+#     from collections import abc
+#     collections.MutableMapping = abc.MutableMapping
+# except:
+#     pass
 
-import collections
-try:
-    from collections import abc
-    collections.MutableMapping = abc.MutableMapping
-except:
-    pass
+
 
 
 
