@@ -4,26 +4,26 @@ from csv import DictReader
 from app import db
 from models import User, Message, Follows
 
-# import collections
+from collections import MutableMapping
 # try:
 #     from collections import abc
 #     collections.MutableMapping = abc.MutableMapping
 # except:
 #     pass
-import collections 
-if sys.version_info.major == 3 and sys.version_info.minor >= 10:
-
-    from collections.abc import MutableMapping
-else:
-    from collections import MutableMapping
-
-
-
-
 
 
 db.drop_all()
 db.create_all()
+
+username='admin'
+password='password'
+email='erik@erikrichard.com'
+
+
+admin_user = User.signup(username, email, password)
+admin_user.is_admin=True
+db.session.add(admin_user)
+db.session.commit()
 
 with open('generator/users.csv') as users:
     db.session.bulk_insert_mappings(User, DictReader(users))
