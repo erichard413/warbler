@@ -4,7 +4,7 @@ from csv import DictReader
 from app import db
 from models import User, Message, Follows
 
-from collections import MutableMapping
+from collections.abc import MutableMapping
 # try:
 #     from collections import abc
 #     collections.MutableMapping = abc.MutableMapping
