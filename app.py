@@ -443,7 +443,7 @@ def messages_show_all():
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
-    shown_msgs = Message.query.all()
+    shown_msgs = (Message.query.order_by(Message.timestamp.desc()).limit(100).all())
     msg = [message for message in shown_msgs if g.user.check_for_blocked(message.user) == False]
     
     return render_template('home.html', messages=msg)
