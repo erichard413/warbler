@@ -3,13 +3,19 @@
 from csv import DictReader
 from app import db
 from models import User, Message, Follows
-from collections.abc import MutableMapping
+
 # import collections
 # try:
 #     from collections import abc
 #     collections.MutableMapping = abc.MutableMapping
 # except:
 #     pass
+import collections 
+if sys.version_info.major == 3 and sys.version_info.minor >= 10
+
+    from collections.abc import MutableMapping
+else 
+    from collections import MutableMapping
 
 
 
