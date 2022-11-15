@@ -21,6 +21,7 @@ db.create_all()
 username='admin'
 password='password'
 email='erik@erikrichard.com'
+image_url='https://pbs.twimg.com/profile_images/1181201389701259265/Ggo4P7Ht_400x400.jpg'
 
 
 admin_user = User.signup(username, email, password)
