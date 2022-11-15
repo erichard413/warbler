@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block content %}
+  {% if g.user.dms|length == 0 %}
+    <h3>Sorry, no direct messages found!</h3>
+  {% else %}
+        <div class="messages">
+
+          {% for dm in g.user.dms|sort(attribute='timestamp', reverse = True) %}
+
+            <div class="col-lg-12 col-md-12 col-12">
+                {% if dm.is_new %}
+              <div class="dm-card-new">
+                {% else %}
+                <div class="dm-card">
+                {% endif %}
+                <div class="dm-inner">
+                  
+                  <div class="dm-card-contents">
+                    <p class="dm-from">{{dm.user_from.username}}</p>
+                    <p class="dm-text">{{dm.message_text}}</p>
+                    <p class="dm-timestamp">At: {{dm.timestamp}}</p>
+                    <div class="dm-buttons">
+                        <form action="/messages/{{dm.user_from.id}}/reply" class="form-inline">
+                        <button class="btn btn-success ml-2">Reply</button>
+                        </form>
+                        <form action="/messages/{{dm.id}}/markread" method="POST" class="form-inline">
+                        <button class="btn btn-outline-success ml-2">Mark As Read</button>
+                        </form>
+                    </div>
+                    
+                    
+                  </div>
+                 
+                  
+                </div>
+                
+              </div>
+              
+            </div>
+
+          {% endfor %}
+
+
+      </div>
+      <script src="/static/script/userindex.js"></script>
+  {% endif %}
+{% endblock %}

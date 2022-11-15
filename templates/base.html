@@ -53,6 +53,14 @@
           {% endif %}
         </a>
       </li>
+      <li>
+        <a href="/messages/direct-messages">
+          <i class="fa-regular fa-envelope"></i>
+          {% if g.user.check_for_new_dm() %}
+          <span class="badge"> </span>
+          {% endif %}
+        </a>
+      </li>
       <li><a href="/messages/new" id="newMsgLink">New Message</a></li>
       <li><a href="/messages/all">Messages</a></li>
       <li><a href="/users">Users</a></li>
